@@ -121,3 +121,49 @@ resource "azurerm_machine_learning_workspace" "mlw" {
     type = "SystemAssigned"
   }
 }
+
+//azure synapse - YR
+resource "azurerm_storage_account" "gen2storage" {
+  name                     = "${var.student_name}${var.environment}${random_integer.deployment_id_suffix.result}st2"
+  resource_group_name      = azurerm_resource_group.rg.name
+  location                 = azurerm_resource_group.rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  account_kind             = "StorageV2"
+  is_hns_enabled           = "true"
+}
+
+resource "azurerm_storage_data_lake_gen2_filesystem" "gen2storage" {
+  name               = "${var.student_name}-${var.environment}-${random_integer.deployment_id_suffix.result}-st2"
+  storage_account_id = azurerm_storage_account.gen2storage.id
+
+  properties = {
+    hello = "aGVsbG8="
+  }
+}
+resource "azurerm_synapse_workspace" "asw" {
+  name                                 = "${var.class_name}-${var.student_name}-${var.environment}-${random_integer.deployment_id_suffix.result}-asw"
+  resource_group_name                  = azurerm_resource_group.rg.name
+  location                             = azurerm_resource_group.rg.location
+  storage_data_lake_gen2_filesystem_id = azurerm_storage_data_lake_gen2_filesystem.gen2storage.id
+  sql_administrator_login              = "sqladminuser"
+  sql_administrator_login_password     = "H@Sh1CoR3!"
+
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = {
+    Env = "production"
+  }
+}
+
+//azure cognitive
+resource "azurerm_cognitive_account" "cs" {
+  name                = "${var.class_name}-${var.student_name}-${var.environment}-${random_integer.deployment_id_suffix.result}-cs"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  kind                = "Face"
+  sku_name            = "S0"
+}
